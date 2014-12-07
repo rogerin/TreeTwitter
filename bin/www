@@ -1,0 +1,68 @@
+#!/usr/bin/env node
+var debug = require('debug')('treeTwitter'),
+	app = require('../app'),
+	socket      = require('socket.io');
+
+
+var Twitter = require('node-tweet-stream')
+  , t = new Twitter({
+    consumer_key: 'gS7SNA6Vbl5Y6YVabNg9OFVwT',
+    consumer_secret: 'j6hfOF8xOtmyOj0HcIL4OBMCjSXFdCqsYP6huDAinGeEQp3xSC',
+    token: '25347187-etaDV7xBi2t4LQQm1JM7iDLwinp3oPiQ8zyXDyWmn',
+    token_secret: '99lYSCn8BEG8VAzEKAoW1EmaNrxWsZuF6XJGq9dyuXvCv'
+  });
+
+
+app.set('port', process.env.PORT || 3000);
+
+var server = app.listen(app.get('port'), function() {
+  debug('Express server listening on port ' + server.address().port);
+});
+
+var io = require('socket.io').listen(server);
+
+io.sockets.on('connection', function (socket) {
+		t.on('tweet', function (tweet) {
+			console.log('Original', tweet.text);
+			var texto = tweet.text.toLowerCase();
+			console.log('Minuscula', texto);
+
+			var n = texto.indexOf("#");
+			console.log('N: ', n);
+
+			var res = texto.substring(n, n+8);
+			console.log('res:', res);
+
+			if(res.toString() == '#treeoff') {
+				console.log('Desliga!');
+			} else if (res.toString() == '#treeon') {
+				console.log('Ligar!');
+			} else {
+				console.log('faz nada');
+			}
+			socket.emit('tweets', {tweet: tweet});  
+	
+		});
+
+		t.on('error', function (err) {
+			console.log('Oh no')
+		});
+
+		t.track('@rogerin');
+		t.track('#treeon');
+		t.track('#treeoff');
+		//t.track('tan');
+
+
+		// 10 minutes later
+		//t.untrack('pizza')
+
+	socket.on('ligaLuz', function(data){
+		//++eventos;
+		//io.sockets.emit('returnStatus', {});
+	});
+	socket.on('disconnect', function () {
+		//--conexoes;
+		//console.log("Caiu: " + conexoes);
+	});
+});
